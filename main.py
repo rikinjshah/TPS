@@ -3,23 +3,16 @@ import requests
 import csv
 import json
 import tqdm
-
 import traceback
-
 import logging
-
 import concurrent.futures
-
-from fake_useragent import UserAgent
-
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='failed.log')
 
-
 def scrape_page(url):
-    user_agent = UserAgent()
     headers = {
-        'User-Agent': user_agent.random,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate, br",
@@ -43,10 +36,8 @@ def scrape_page(url):
 
     return response.text
 
-
 def remove_cloudflare(url):
     return 'https://webcache.googleusercontent.com/search?q=cache:' + url
-
 
 def get_page_source(url):
     new_url = remove_cloudflare(url)
@@ -61,12 +52,14 @@ def get_page_source(url):
         log_failed_url(url, 'unknown')
         logging.error(f'Error: {e}')
 
-
 def log_failed_url(url, error_code):
     filename = f'failed_{error_code}.txt'
     with open(filename, 'a') as f:
         f.write(f'{url}\n')
 
+def log_success_url(url):
+    with open('success.txt', 'a') as f:
+        f.write(f'{url}\n')
 
 if __name__ == '__main__':
     if False:
@@ -81,12 +74,17 @@ if __name__ == '__main__':
     with open('input.csv', 'r') as f:
         reader = csv.reader(f)
         headers = next(reader)
-
         urls = [row[0] for row in reader]
 
-    with open('output.csv', 'w', newline='') as f:
+    output_file = 'output.csv'
+    file_exists = os.path.isfile(output_file)
+
+    with open(output_file, 'a', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(headers)
+
+        # Write header only if the file is being created
+        if not file_exists:
+            writer.writerow(headers)
 
         bar = tqdm.tqdm(total=len(urls), desc='Scraping URLs', unit='URL')
 
@@ -94,6 +92,7 @@ if __name__ == '__main__':
             html = get_page_source(url)
             if html:
                 data = scraper.scrape_source(html)
+                log_success_url(url)
                 bar.update(1)
                 return url, html, data
             else:
@@ -101,17 +100,22 @@ if __name__ == '__main__':
                 return url, None, None
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures = []
-            for url in urls:
-                futures.append(executor.submit(scrape_url, url))
+            futures = [executor.submit(scrape_url, url) for url in urls]
 
             for future in concurrent.futures.as_completed(futures):
                 try:
                     result = future.result()
                     url, html, data = result
                     if data:
-                        # Page URL,First Name,Middle Initial,Last Name,Age,Phone Number,City,State,Birth Month,Birth Year,Also Seen As,Current Address,Current Address Details,Phone Numbers,Email Addresses,Previous Addresses,Possible Relatives
-                        writer.writerow([url, data['first_name'], data['middle_initial'], data['last_name'], data['age'], data['telephone'], data['city'], data['state'], data['born_month'], data['born_year'], ';'.join(data['also_seen_as']), data['current_address'], data['current_address_details'], ';'.join(['~'.join(x.values()) for x in data['phone_numbers']]), ';'.join(data['email_addresses']), ';'.join(['~'.join(x.values()) for x in data['previous_addresses']]), ';'.join(['~'.join(x.values()) for x in data['possible_relatives']])])
+                        writer.writerow([
+                            url, data['first_name'], data['middle_initial'], data['last_name'], data['age'], 
+                            data['telephone'], data['city'], data['state'], data['born_month'], data['born_year'], 
+                            ';'.join(data['also_seen_as']), data['current_address'], data['current_address_details'], 
+                            ';'.join(['~'.join(x.values()) for x in data['phone_numbers']]), 
+                            ';'.join(data['email_addresses']), 
+                            ';'.join(['~'.join(x.values()) for x in data['previous_addresses']]), 
+                            ';'.join(['~'.join(x.values()) for x in data['possible_relatives']])
+                        ])
                 except Exception as e:
                     logging.error(f'Failed to scrape {url}')
                     logging.error(traceback.format_exc())
