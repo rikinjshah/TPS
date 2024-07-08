@@ -4,8 +4,3 @@ fake-useragent
 GitPython
 tqdm
 ratelimit
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
-google-auth-httplib2
