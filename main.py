@@ -74,25 +74,39 @@ def push_to_github(file_path, commit_message):
         logging.error(traceback.format_exc())
 
 if __name__ == '__main__':
-    if False:
-        url = 'https://www.truepeoplesearch.com/find/person/px4402l9rnn6r408nunn4'
-        html = get_page_source(url)
-        if html:
-            data = scraper.scrape_source(html)
-            with open('data.json', 'w') as f:
-                json.dump(data, f, indent=4)
-        exit(0)
-
-    with open('input.csv', 'r') as f:
-        reader = csv.reader(f)
-        headers = next(reader)
-        urls = [row[0] for row in reader]
+    urls = [
+        "https://www.truepeoplesearch.com/find/person/pxr4900ulunn0r4l4ur24",
+        "https://www.truepeoplesearch.com/find/person/px4488nrrl2u0u4uuunrl",
+        "https://www.truepeoplesearch.com/find/person/pr2u64lu4289rrr9r202",
+        "https://www.truepeoplesearch.com/find/person/pxn0rnr8ln822rn2lur96",
+        "https://www.truepeoplesearch.com/find/person/pxl8ll49r822nr26u4rn6",
+        "https://www.truepeoplesearch.com/find/person/plnl8lll2n6n06680066",
+        "https://www.truepeoplesearch.com/find/person/px8ln608l660l6r2n2n00",
+        "https://www.truepeoplesearch.com/find/person/p4494l2ll228r044nu4r",
+        "https://www.truepeoplesearch.com/find/person/p484r82r0unnrrlu4668",
+        "https://www.truepeoplesearch.com/find/person/p88900096n0ln964l29l",
+        "https://www.truepeoplesearch.com/find/person/pxul64urr2889unrll680",
+        "https://www.truepeoplesearch.com/find/person/pxu8l692u90429r966n8u",
+        "https://www.truepeoplesearch.com/find/person/px240l40l609n0nnr8r88",
+        "https://www.truepeoplesearch.com/find/person/px409nl9u4rrr4rl602rr",
+        "https://www.truepeoplesearch.com/find/person/prr4nr9r8lnlr06r04u4",
+        "https://www.truepeoplesearch.com/find/person/pxl99l66u4r4uu0u02lrn"
+    ]
 
     output_file = 'output.csv'
     file_exists = os.path.isfile(output_file)
 
     with open(output_file, 'a', newline='') as f:
         writer = csv.writer(f)
+
+        # Define headers based on the data structure
+        headers = [
+            "url", "first_name", "middle_initial", "last_name", "age", 
+            "telephone", "city", "state", "born_month", "born_year", 
+            "also_seen_as", "current_address", "current_address_details", 
+            "phone_numbers", "email_addresses", "previous_addresses", 
+            "possible_relatives"
+        ]
 
         # Write header only if the file is being created
         if not file_exists:
