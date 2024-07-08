@@ -111,7 +111,7 @@ if __name__ == '__main__':
                 bar.update(1)
                 return url, None, None
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             futures = [executor.submit(scrape_url, url) for url in urls]
 
             for future in concurrent.futures.as_completed(futures):
